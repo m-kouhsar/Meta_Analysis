@@ -30,22 +30,6 @@ Input_csv_file <- trimws(args[2])
 min_gene_appearance <- as.numeric(trimws(args[3]))
 OutPrefix <- trimws(args[4])
 
-
-
-
-results_dir <- "C:/Users/mk693/OneDrive - University of Exeter/Desktop/2021/Lars's Team in Germany/small RNA-Seq"
-setwd(results_dir)
-
-Input_Dir <- "Results/Final_DEG"
-Input_csv_file <- "meta_input_exceRpt.Br0.Br2.csv"
-min_gene_appearance <- 6
-OutPrefix = "."
-
-
-
-
-
-
 dir.create(dirname(OutPrefix) , recursive = T)
 
 Input_csv <- read.csv(Input_csv_file , stringsAsFactors = F , header = T)
@@ -206,3 +190,4 @@ final_results <- merge.data.frame(data_meta.all, meta_results, by = "Gene")
 
 # Save to file
 write.csv(final_results, paste(OutPrefix , ".metafor.csv"), row.names = F)
+
