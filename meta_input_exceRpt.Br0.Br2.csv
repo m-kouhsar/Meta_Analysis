@@ -1,0 +1,7 @@
+﻿Study_name,DEG_file,Gene_col,SE_col,ES_col
+BDR1,BDR1/BDR1.exceRpt.limma.SV3.Brk0.Brk2.bacon.csv,Gene,bacon_SE_corrected,bacon_effect_sizes_corrected
+BDR2,BDR2/BDR2.exceRpt.limma.SV13.Brk0.Brk2.bacon.csv,Gene,bacon_SE_corrected,bacon_effect_sizes_corrected
+NIH,NIH/NIH.exceRpt.limma.SV4.Brk0.Brk2.bacon.csv,Gene,bacon_SE_corrected,bacon_effect_sizes_corrected
+OPTIMA,OPTIMA/OPTIMA.exceRpt.limma.SV4.Brk0.Brk2.bacon.csv,Gene,bacon_SE_corrected,bacon_effect_sizes_corrected
+ROSMAP,ROSMAP/ROSMAP.exceRpt.limma.SV15.Brk0.Brk2.bacon.csv,Gene,bacon_SE_corrected,bacon_effect_sizes_corrected
+UKBBN,UKBBN/UKBBN.exceRpt.limma.SV8.Brk0.Brk2.bacon.csv,Gene,bacon_SE_corrected,bacon_effect_sizes_corrected
