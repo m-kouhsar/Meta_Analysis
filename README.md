@@ -1,2 +1,2 @@
 # Meta_Analysis
-Running meta-analysis on DEG/EWAS analysis results from multiple studies. 
+Running a meta-analysis on DEG/EWAS results from multiple studies using [metafor](https://wviechtb.github.io/metafor/) package in R. 
