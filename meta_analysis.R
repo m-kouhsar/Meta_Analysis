@@ -1,7 +1,7 @@
 
 message("Loading requiered libraries...")
-suppressMessages(library(tidyverse))
-suppressMessages(library(metafor))
+suppressWarnings(suppressMessages(library(tidyverse)))
+suppressWarnings(suppressMessages(library(metafor)))
 
 ####################################################################################
 # Input arguments:
@@ -164,8 +164,8 @@ for (i in 1:nrow(data_meta.all)) {
   })
 }
 
-index = apply(meta_results , MARGIN = 1 , function(x){all(is.na(x))})
-warning("Meta analysis was failed for ",sum(index) , " genes!")
+index = apply(meta_results , MARGIN = 1 , function(x){all(is.na(x[-1]))})
+warning("Meta analysis was failed for ",sum(index) , " genes:\n" , paste(meta_results$Gene[index] , collapse = ";"))
 meta_results <- meta_results[!index , ]
 
 meta_results$Fixed_pval_Bonf <- p.adjust(meta_results$Fixed_pval, method = "bonferroni")
@@ -189,5 +189,5 @@ data_meta.all <- data_meta.all[!index , ]
 final_results <- merge.data.frame(data_meta.all, meta_results, by = "Gene")
 
 # Save to file
-write.csv(final_results, paste(OutPrefix , ".metafor.csv"), row.names = F)
+write.csv(final_results, paste0(OutPrefix , ".metafor.csv"), row.names = F)
 

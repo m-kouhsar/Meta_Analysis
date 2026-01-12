@@ -32,7 +32,7 @@ Input_csv_file="meta_input_exceRpt.Br0.Br2.csv"
 min_gene_appearance=5
 OutPrefix="./Results/meta_analysis/SmallRNAProject"
 
-ScriptDir="Mygithub/Meta_Analydid/"
+ScriptDir="/Morteza/github/Meta_Analysis/"
 ###################################################################################
 
-Rscript ${ScriptDir}/metaanlysis.R "$Input_Dir"  "$Input_csv_file"  "$min_gene_appearance"  "$OutPrefix" 
+Rscript ${ScriptDir}/meta_analysis.R "$Input_Dir"  "$Input_csv_file"  "$min_gene_appearance"  "$OutPrefix" 
