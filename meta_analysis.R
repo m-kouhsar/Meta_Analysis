@@ -2,6 +2,7 @@
 message("Loading requiered libraries...")
 suppressWarnings(suppressMessages(library(tidyverse)))
 suppressWarnings(suppressMessages(library(metafor)))
+set.seed(12345)
 
 ####################################################################################
 # Input arguments:
