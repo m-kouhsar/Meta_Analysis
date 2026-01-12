@@ -175,6 +175,11 @@ meta_results$Random_pval_Bonf <- p.adjust(meta_results$Random_pval, method = "bo
 meta_results$Fixed_pval_FDR <- p.adjust(meta_results$Fixed_pval, method = "fdr")
 meta_results$Random_pval_FDR <- p.adjust(meta_results$Random_pval, method = "fdr")
 
+n_fixed_sig <- sum(meta_results$Fixed_pval < 0.05, na.rm = TRUE)
+n_random_sig <- sum(meta_results$Random_pval < 0.05, na.rm = TRUE)
+message("Nominally-significant genes (Fixed):", n_fixed_sig)
+message("Nominally-significant genes (Random):", n_random_sig)
+
 n_fixed_sig <- sum(meta_results$Fixed_pval_Bonf < 0.05, na.rm = TRUE)
 n_random_sig <- sum(meta_results$Random_pval_Bonf < 0.05, na.rm = TRUE)
 message("Bonferroni-significant genes (Fixed):", n_fixed_sig)
