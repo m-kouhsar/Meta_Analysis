@@ -5,6 +5,13 @@ suppressWarnings(suppressMessages(library(metafor)))
 suppressWarnings(suppressMessages(library(ggplot2)))
 set.seed(12345)
 
+calculate_lambda <- function(pvals) {
+  pvals <- pvals[!is.na(pvals) & pvals > 0 & pvals < 1]
+  chisq <- qchisq(1 - pvals, df = 1)
+  lambda <- median(chisq) / qchisq(0.5, df = 1)
+  return(lambda)
+}
+
 ####################################################################################
 # Input arguments:
 #   
@@ -224,11 +231,23 @@ ggplot(PlotData, aes(x = Fixed_Pval)) +
   theme_minimal() +
   labs(title = "Histogram of P-value in Fixed effect model", x = "P-value", y = "Density")
 
+qq(PlotData$Random_Pval, main="QQ Plot - Random P-value")
+text(x = 0.5,y = (par("usr")[4]-0.2),
+     label = bquote(lambda == .(round(calculate_lambda(PlotData$Random_Pval), 2))),
+     adj = c(0, 1),
+     cex = 1)
+
+qq(PlotData$Fixed_Pval, main="QQ Plot - Fixed P-value")
+text(x = 0.5,y = (par("usr")[4]-0.2),
+     label = bquote(lambda == .(round(calculate_lambda(PlotData$Fixed_Pval), 2))),
+     adj = c(0, 1),
+     cex = 1)
+
 meta_results <- meta_results[order(meta_results$Random_pval , decreasing = F),]
 top_genes <- meta_results$Gene[1:10]
 
 
-par(mfrow = c(3, 2), mar = c(4, 4, 2, 2)) 
+par(mfrow = c(3, 2), mar = c(5, 5, 5, 5)) 
 
 # 2. Loop through the top genes
 for (g in top_genes) {
