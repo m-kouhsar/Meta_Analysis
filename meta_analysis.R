@@ -2,6 +2,7 @@
 message("Loading requiered libraries...")
 suppressWarnings(suppressMessages(library(tidyverse)))
 suppressWarnings(suppressMessages(library(metafor)))
+suppressWarnings(suppressMessages(library(ggplot2)))
 set.seed(12345)
 
 ####################################################################################
@@ -109,12 +110,20 @@ common_genes <- names(gene_counts)[gene_counts >= min_gene_appearance]
 
 studies <- lapply(studies,function(df){df[common_genes,]})
 studies <- lapply(studies, na.omit)
-studies <- imap(studies , function(df,name){
-  colnames(df)[-1] <- paste0(colnames(df)[-1], ".", name)
-  return(df)
-})
 
-data_meta.all <- Reduce(function(x,y){merge(x,y,by="Gene",all=T)},studies)
+data_meta.all <- data.frame()
+
+for (study_name in names(studies)) {
+  
+  # Extract the dataframe for this study
+  temp_df <- studies[[study_name]]
+  
+  # Add a column identifying the study
+  temp_df$study <- study_name
+  
+  # Bind it to the master dataframe
+  data_meta.all <- rbind(data_meta.all, temp_df)
+}
 
 
 # Initialize results storage
@@ -132,28 +141,19 @@ meta_results <- data.frame(
 
 message("Running meta-analysis...")
 # Loop through each row (gene)
-for (i in 1:nrow(data_meta.all)) {
+for (i in 1:length(common_genes)) {
   
-  meta_results[i,"Gene"] = data_meta.all$Gene[i]
+  #print(i)
+  dat <- subset(data_meta.all, Gene == common_genes[i])
+  meta_results[i,"Gene"] = common_genes[i]
   try({
-    # Extract values for current gene
     
-    index_ES = grep("Effect_Size", colnames(data_meta.all), fixed = TRUE)
-    yi <- as.numeric(data_meta.all[i,index_ES])
-    
-    index_SE = grep("Standard_Error", colnames(data_meta.all), fixed = TRUE)
-    sei <- as.numeric(data_meta.all[i,index_SE])
-    
-    # Remove NAs if any
-    valid <- !is.na(yi) & !is.na(sei)
-    yi <- yi[valid]; sei <- sei[valid]
-    
-    if (length(yi) > 1) {
+    if ((sum(!is.na(dat$Standard_Error) )> 1) & (sum(!is.na(dat$Effect_Size) )> 1)) {
       # Fixed-effect model
-      fe <- rma.uni(yi = yi, sei = sei, method = "FE")
+      fe <- rma.uni(yi = Effect_Size, sei = Standard_Error, method = "FE" , data = dat , slab = study)
       
       # Random-effects model
-      re <- rma.uni(yi = yi, sei = sei, method = "REML")
+      re <- rma.uni(yi = Effect_Size, sei = Standard_Error, method = "REML", data = dat , slab = study)
       
       # Store results
       meta_results[i,-1 ] <- c(
@@ -161,12 +161,16 @@ for (i in 1:nrow(data_meta.all)) {
         re$b, re$se, re$pval,         # random
         re$tau2, re$I2                # heterogeneity stats
       )
+    }else{
+      message("Warning! Not enaough data for gene ",i,": ",common_genes[i])
     }
+    
   })
 }
 
 index = apply(meta_results , MARGIN = 1 , function(x){all(is.na(x[-1]))})
-warning("Meta analysis was failed for ",sum(index) , " genes:\n" , paste(meta_results$Gene[index] , collapse = ";"))
+if(sum(index)>0)
+  warning("Meta analysis was failed for ",sum(index) , " genes:\n" , paste(meta_results$Gene[index] , collapse = ";"))
 meta_results <- meta_results[!index , ]
 
 meta_results$Fixed_pval_Bonf <- p.adjust(meta_results$Fixed_pval, method = "bonferroni")
@@ -190,10 +194,82 @@ n_random_sig <- sum(meta_results$Random_pval_FDR < 0.05, na.rm = TRUE)
 message("FDR-significant genes (Fixed):", n_fixed_sig)
 message("FDR-significant genes (Random):", n_random_sig)
 
-# Combine with original matrix
-data_meta.all <- data_meta.all[!index , ]
-final_results <- merge.data.frame(data_meta.all, meta_results, by = "Gene")
-
 # Save to file
-write.csv(final_results, paste0(OutPrefix , ".metafor.csv"), row.names = F)
+write.csv(meta_results, paste0(OutPrefix , ".metafor.csv"), row.names = F)
+
+############################################################################################
+#             Visualization
+############################################################################################
+PlotData <- data.frame(Gene = meta_results$Gene, Random_Pval = meta_results$Random_pval , Fixed_Pval = meta_results$Fixed_pval)
+
+pdf(file = paste0(OutPrefix , ".metafor.plots.pdf") , width = 10,height = 8)
+# 3. Create the plot
+ggplot(PlotData, aes(x = Random_Pval)) + 
+  # Histogram: Note the y = after_stat(density) argument
+  geom_histogram(aes(y = after_stat(density)),
+                 fill = "lightblue", 
+                 color = "black") +
+  # Density line: Overlay the line
+  geom_density(color = "red", linewidth = 1) +
+  theme_minimal() +
+  labs(title = "Histogram of P-value in Random effect model", x = "P-value", y = "Density")
+
+ggplot(PlotData, aes(x = Fixed_Pval)) + 
+  # Histogram: Note the y = after_stat(density) argument
+  geom_histogram(aes(y = after_stat(density)),
+                 fill = "lightblue", 
+                 color = "black") +
+  # Density line: Overlay the line
+  geom_density(color = "red", linewidth = 1) +
+  theme_minimal() +
+  labs(title = "Histogram of P-value in Fixed effect model", x = "P-value", y = "Density")
+
+meta_results <- meta_results[order(meta_results$Random_pval , decreasing = F),]
+top_genes <- meta_results$Gene[1:10]
+
+
+par(mfrow = c(3, 2), mar = c(4, 4, 2, 2)) 
+
+# 2. Loop through the top genes
+for (g in top_genes) {
+  
+  # A. Subset data for this specific gene
+  dat <- subset(data_meta.all, Gene == g)
+  
+  # B. Run the Random Effects Model
+  # Note: We use 'sei' because you have Standard Error (seTE)
+  res_re <- rma(yi = Effect_Size, sei = Standard_Error, data = dat, slab = study)
+  
+  # C. Run Fixed/Common Effect Model (optional, to match your image)
+  res_fe <- rma(yi = Effect_Size, sei = Standard_Error, data = dat, method = "FE")
+  
+  k <- nrow(dat)
+  # CHANGE 2: Manually set ylim
+  # c(bottom_limit, top_limit)
+  # -2.5: Extends the bottom to make room for the extra diamond at row -2
+  # k + 3: Keeps the standard top spacing for headers
+  forest(res_re,
+         header = TRUE,
+         main = g,
+         xlab = "Effect Size",
+         cex = 0.95,
+         mlab = "Random Effects",
+         ylim = c(-2.5, k + 3) 
+  )
+  
+  # E. Add the Common Effect Diamond (optional)
+  addpoly(res_fe, row = -2, mlab = "Common Effect")
+}
+
+# Reset layout
+par(mfrow = c(1, 1))
+
+graphics.off()
+
+
+
+
+
+
+
 
