@@ -3,6 +3,7 @@ message("Loading requiered libraries...")
 suppressWarnings(suppressMessages(library(tidyverse)))
 suppressWarnings(suppressMessages(library(metafor)))
 suppressWarnings(suppressMessages(library(ggplot2)))
+suppressWarnings(suppressMessages(library(qqman)))
 set.seed(12345)
 
 calculate_lambda <- function(pvals) {
