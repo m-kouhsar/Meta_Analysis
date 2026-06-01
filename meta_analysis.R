@@ -203,6 +203,7 @@ message("FDR-significant genes (Fixed):", n_fixed_sig)
 message("FDR-significant genes (Random):", n_random_sig)
 
 # Save to file
+meta_results <- meta_results[order(meta_results$Random_pval , decreasing = F),]
 write.csv(meta_results, paste0(OutPrefix , ".metafor.csv"), row.names = F)
 
 ############################################################################################
@@ -245,7 +246,12 @@ text(x = 0.5,y = (par("usr")[4]-0.2),
      cex = 1)
 
 meta_results <- meta_results[order(meta_results$Random_pval , decreasing = F),]
-top_genes <- meta_results$Gene[1:10]
+meta_results_sig <- meta_results[meta_results$Random_pval < 0.05 ,]
+if(nrow(meta_results_sig)>20){
+  top_genes <- meta_results_sig$Gene[1:20] 
+}else{
+  top_genes <- meta_results_sig$Gene 
+}
 
 
 par(mfrow = c(3, 2), mar = c(5, 5, 5, 5)) 
@@ -258,10 +264,10 @@ for (g in top_genes) {
   
   # B. Run the Random Effects Model
   # Note: We use 'sei' because you have Standard Error (seTE)
-  res_re <- rma(yi = Effect_Size, sei = Standard_Error, data = dat, slab = study)
+  res_re <- rma(yi = Effect_Size, sei = Standard_Error, data = dat, slab = study,method = "REML")
   
   # C. Run Fixed/Common Effect Model (optional, to match your image)
-  res_fe <- rma(yi = Effect_Size, sei = Standard_Error, data = dat, method = "FE")
+  res_fe <- rma(yi = Effect_Size, sei = Standard_Error, data = dat, slab = study,method = "FE")
   
   k <- nrow(dat)
   # CHANGE 2: Manually set ylim
